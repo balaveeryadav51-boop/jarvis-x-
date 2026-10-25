@@ -42,6 +42,8 @@ jobs:
 
       - name: Build APK
         working-directory: project
+        env:
+          FIREBASE_APPCHECK_DEBUG_TOKEN: ${{ secrets.FIREBASE_APPCHECK_DEBUG_TOKEN }}
         run: |
           gradle assembleDebug --no-daemon
 
