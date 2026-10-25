@@ -11,11 +11,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract Android project
+      - name: Extract project
         run: |
           mkdir project
           unzip "jarvis-x (1).zip" -d project
-          find project -type f \( -name settings.gradle.kts -o -name settings.gradle \)
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -28,20 +27,27 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Build Android APK
+      - name: Generate debug keystore
         working-directory: project
         run: |
-          PROJECT_DIR="$(find . -type f \( -name settings.gradle.kts -o -name settings.gradle \) -print -quit)"
-          if [ -z "$PROJECT_DIR" ]; then
-            echo "ERROR: Gradle settings file not found"
-            exit 1
-          fi
-          cd "$(dirname "$PROJECT_DIR")"
+          keytool -genkeypair -v \
+            -keystore debug.keystore \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Build APK
+        working-directory: project
+        run: |
           gradle assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: JARVIS-X-APK
-          path: project/**/build/outputs/apk/debug/*.apk
+          path: project/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
