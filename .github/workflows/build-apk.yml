@@ -15,8 +15,7 @@ jobs:
         run: |
           mkdir project
           unzip "jarvis-x (1).zip" -d project
-          find project -name settings.gradle.kts -o -name settings.gradle
-          find project -name build.gradle.kts -o -name build.gradle
+          find project -type f \( -name settings.gradle.kts -o -name settings.gradle \)
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -27,13 +26,17 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.13'
+          gradle-version: '9.3.1'
 
       - name: Build Android APK
         working-directory: project
         run: |
-          PROJECT_DIR="$(find . -name settings.gradle.kts -o -name settings.gradle | head -n 1 | xargs dirname)"
-          cd "$PROJECT_DIR"
+          PROJECT_DIR="$(find . -type f \( -name settings.gradle.kts -o -name settings.gradle \) -print -quit)"
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "ERROR: Gradle settings file not found"
+            exit 1
+          fi
+          cd "$(dirname "$PROJECT_DIR")"
           gradle assembleDebug --no-daemon
 
       - name: Upload APK
